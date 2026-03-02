@@ -3,8 +3,9 @@ description: "Upgrade dependencies in uv.lock and open a pull request"
 author: "Philip M. Gollucci"
 inputs:
   gh_token:
-    description: "GitHub Token"
-    required: true
+    description: "Fallback GitHub token (e.g., P6_A_GH_TOKEN)"
+    required: false
+    default: ""
   python_version:
     description: "Python version"
     required: false
@@ -38,7 +39,8 @@ runs:
       id: token
       uses: p6m7g8-actions/gh-token-normalize@main
       with:
-        preferred-token: ${{ inputs.gh_token }}
+        preferred-token: ${{ github.token }}
+        fallback-token: ${{ inputs.gh_token }}
         default-token: ${{ github.token }}
     - name: Configure authenticated git remote
       shell: bash
@@ -49,6 +51,7 @@ runs:
       uses: peter-evans/create-pull-request@v8.1.0
       with:
         token: ${{ steps.token.outputs.value }}
+        branch-token: ${{ steps.token.outputs.value }}
         commit-message: |-
           chore(deps): upgrade dependencies
 
@@ -57,7 +60,11 @@ runs:
           [Workflow Run]: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         branch: github-actions/upgrade-main
         title: "chore(deps): upgrade dependencies"
-        labels: auto-approve
+        labels: |
+          auto-approve
+          auto-merge
+        reviewers: |
+          p6m7g8-automation
         body: |-
           Upgrades project dependencies. See details in [workflow run].
 
